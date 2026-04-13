@@ -1,14 +1,15 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
-const char* ssid = "YOUR_WIFI_NAME";
-const char* password = "YOUR_WIFI_PASSWORD";
+// Set the credentials for your ESP32's own network
+const char* ssid = "ESP32_Control_Panel";
+const char* password = "password123"; 
 
 WebServer server(80);
 const int ledPin = 2; // Onboard LED
 
 void handleRoot() {
-  String html = "<h1>ESP32 LED Control</h1>";
+  String html = "<h1>ESP32 LED Control (AP Mode)</h1>";
   html += "<p><a href='/on'><button>ON</button></a></p>";
   html += "<p><a href='/off'><button>OFF</button></a></p>";
   server.send(200, "text/html", html);
@@ -18,15 +19,14 @@ void setup() {
   Serial.begin(115200);
   pinMode(ledPin, OUTPUT);
   
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  
-  Serial.println("\nWiFi connected.");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  // Configure the ESP32 as an Access Point
+  Serial.print("Configuring access point...");
+  WiFi.softAP(ssid, password);
+
+  // Get the IP assigned to the AP (Default is 192.168.4.1)
+  IPAddress myIP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(myIP);
 
   server.on("/", handleRoot);
   server.on("/on", []() {
@@ -39,6 +39,7 @@ void setup() {
   });
 
   server.begin();
+  Serial.println("HTTP server started");
 }
 
 void loop() {
